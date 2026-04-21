@@ -5,6 +5,7 @@ import { GraphEngine } from './graph.js';
 import { NoteViewer } from './note-viewer.js';
 import { HUD } from './hud.js';
 import { Particles } from './particles.js';
+import { mountCameraPicker } from './camera-picker.js';
 
 const state = {
   // Per-hand drag: Map<handKey, node>
@@ -89,6 +90,7 @@ async function init() {
   try {
     await tracker.start();
     hud.setStatus('ONLINE');
+    mountCameraPicker({ tracker }).catch((e) => console.warn('[main] camera picker failed', e));
   } catch (err) {
     console.warn('[main] camera denied, falling back to mouse', err);
     state.cameraFallback = true;

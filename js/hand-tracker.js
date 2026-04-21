@@ -536,4 +536,25 @@ export class HandTracker {
     this.twoHandActive = false;
     this._filters.clear();
   }
+
+  async setCamera(deviceId) {
+    const oldStream = this.videoEl.srcObject;
+    if (oldStream && typeof oldStream.getTracks === 'function') {
+      oldStream.getTracks().forEach((t) => t.stop());
+    }
+    this.videoEl.srcObject = null;
+    const constraints = {
+      video: {
+        deviceId: deviceId ? { exact: deviceId } : undefined,
+        width: 1280,
+        height: 720,
+        facingMode: deviceId ? undefined : 'user',
+      },
+      audio: false,
+    };
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    this.videoEl.srcObject = stream;
+    await this.videoEl.play();
+    return stream.getVideoTracks()[0]?.label || 'unknown';
+  }
 }
