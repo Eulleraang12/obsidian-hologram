@@ -1,0 +1,265 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  background: #000814;
+  color: #fff;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  cursor: none;
+}
+
+h1, h2, h3, .orbitron { font-family: 'Orbitron', sans-serif; }
+
+:root {
+  --amber: #00D4FF;
+  --amber-glow: #4FE3FF;
+  --cyan: #00D4FF;
+  --green: #10B981;
+}
+
+#webcam {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  transform: scaleX(-1);
+  z-index: 1;
+}
+
+#webcam-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(rgba(0,20,40,0.3), rgba(0,10,25,0.5));
+  z-index: 2;
+  pointer-events: none;
+}
+
+#particles-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+#graph-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 4;
+  pointer-events: auto;
+}
+
+#hand-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 5;
+}
+
+#hud-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+#note-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+}
+#note-layer > * { pointer-events: auto; }
+
+.hud-tl, .hud-tr, .hud-bl, .hud-br {
+  position: fixed;
+  padding: 16px 20px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #4FE3FF;
+  text-shadow: 0 0 12px rgba(0,212,255,0.8);
+  border: 1px solid rgba(0,212,255,0.4);
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+}
+.hud-tl { top: 16px; left: 16px; }
+.hud-tr { top: 16px; right: 16px; text-align: right; }
+.hud-bl { bottom: 16px; left: 16px; }
+.hud-br { bottom: 16px; right: 16px; }
+
+.hud-dot, .pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 12px #10B981;
+  animation: pulse 1.5s infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 12px #10B981; }
+  50% { opacity: 0.4; box-shadow: 0 0 4px #10B981; }
+}
+
+.minimap {
+  position: fixed;
+  top: 80px;
+  right: 16px;
+  width: 220px;
+  height: 140px;
+  border: 1px solid rgba(0,212,255,0.5);
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+}
+
+.hologram-panel {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 60vw;
+  max-width: 900px;
+  height: 70vh;
+  max-height: 700px;
+  border: 1px solid rgba(0,212,255,0.7);
+  box-shadow: 0 0 60px rgba(0,212,255,0.4), inset 0 0 40px rgba(0,212,255,0.15);
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 32px;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px);
+  font-family: 'JetBrains Mono', monospace;
+  color: #4FE3FF;
+  overflow: auto;
+}
+
+.hologram-panel h1,
+.hologram-panel h2,
+.hologram-panel h3 {
+  font-family: 'Orbitron', sans-serif;
+  color: #FFFFFF;
+  text-shadow: 0 0 16px rgba(0,212,255,0.8);
+  margin-bottom: 12px;
+}
+
+.hologram-panel .wikilink {
+  color: #00D4FF;
+  text-shadow: 0 0 8px rgba(0,212,255,0.6);
+}
+
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #4FE3FF, transparent);
+  box-shadow: 0 0 20px #00D4FF;
+}
+
+#boot-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  letter-spacing: 4px;
+  color: #4FE3FF;
+  text-shadow: 0 0 20px #00D4FF;
+  transition: opacity 800ms;
+  z-index: 100;
+}
+#boot-screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.legend-item {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 10px;
+  margin-right: 12px;
+}
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* Iron Man Jarvis HUD enhancements */
+.scan-lines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2.5;
+  mix-blend-mode: screen;
+  background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(0,212,255,0.04) 3px 4px);
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2.4;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0,20,40,0.35) 60%, rgba(0,20,40,0.7) 100%);
+}
+
+.corner-bracket {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+  z-index: 60;
+  box-shadow: 0 0 12px rgba(0,212,255,0.8);
+  animation: hud-pulse 2.4s ease-in-out infinite;
+}
+.corner-bracket.tl {
+  top: 20px;
+  left: 20px;
+  border-top: 2px solid #00D4FF;
+  border-left: 2px solid #00D4FF;
+}
+.corner-bracket.tr {
+  top: 20px;
+  right: 20px;
+  border-top: 2px solid #00D4FF;
+  border-right: 2px solid #00D4FF;
+}
+.corner-bracket.bl {
+  bottom: 20px;
+  left: 20px;
+  border-bottom: 2px solid #00D4FF;
+  border-left: 2px solid #00D4FF;
+}
+.corner-bracket.br {
+  bottom: 20px;
+  right: 20px;
+  border-bottom: 2px solid #00D4FF;
+  border-right: 2px solid #00D4FF;
+}
+
+@keyframes hud-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}

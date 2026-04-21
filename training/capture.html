@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Captura de Gestos — Treinamento</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #040810;
+      color: #c0d8e8;
+      font-family: 'Rajdhani', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+    }
+    h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 20px;
+      color: #00f0ff;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #4a6a7a;
+      margin-bottom: 24px;
+      text-align: center;
+      max-width: 600px;
+    }
+    .main {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 1200px;
+    }
+    .video-box {
+      position: relative;
+      border: 2px solid rgba(0,240,255,0.4);
+      border-radius: 12px;
+      overflow: hidden;
+      width: 640px;
+      height: 480px;
+      background: #000;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+      display: block;
+    }
+    .flash {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,240,255,0.3);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+    .flash.active { opacity: 1; }
+    .countdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Orbitron', monospace;
+      font-size: 80px;
+      color: #00f0ff;
+      text-shadow: 0 0 40px rgba(0,240,255,0.8);
+      display: none;
+    }
+    .countdown.show { display: block; }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 280px;
+    }
+    .gesture-btn {
+      font-family: 'Orbitron', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 16px 20px;
+      border: 2px solid rgba(0,240,255,0.4);
+      border-radius: 10px;
+      background: rgba(0,240,255,0.06);
+      color: #00f0ff;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .gesture-btn:hover {
+      border-color: #00f0ff;
+      box-shadow: 0 0 20px rgba(0,240,255,0.3);
+    }
+    .gesture-btn.capturing {
+      border-color: #ff6a00;
+      color: #ff6a00;
+      background: rgba(255,106,0,0.1);
+      animation: pulse 0.5s ease infinite;
+    }
+    .gesture-btn .count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(0,240,255,0.12);
+    }
+    .gesture-btn.done { border-color: #00ff88; color: #00ff88; }
+    .gesture-btn.done .count { background: rgba(0,255,136,0.12); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+    }
+    .download-btn {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px;
+      padding: 14px 24px;
+      border: 2px solid #00ff88;
+      border-radius: 8px;
+      background: rgba(0,255,136,0.1);
+      color: #00ff88;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      flex: 1;
+    }
+    .download-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #4a6a7a;
+      margin-top: 12px;
+      text-align: center;
+    }
+    .instructions {
+      margin-top: 20px;
+      padding: 16px 20px;
+      border: 1px solid rgba(0,240,255,0.2);
+      border-radius: 10px;
+      background: rgba(0,240,255,0.03);
+      max-width: 640px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .instructions h3 {
+      font-family: 'Orbitron', monospace;
+      font-size: 12px;
+      color: #00f0ff;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+    .instructions li { margin: 6px 0; }
+    .instructions em { color: #00f0ff; font-style: normal; }
+  </style>
+</head>
+<body>
+  <h1>Captura de Gestos</h1>
+  <p class="subtitle">Clique no gesto, faca o gesto com a mao, aguarde 3 segundos de captura automatica (25 frames). Repita pra cada gesto.</p>
+
+  <div class="main">
+    <div class="video-box">
+      <video id="video" autoplay muted playsinline></video>
+      <div class="flash" id="flash"></div>
+      <div class="countdown" id="countdown"></div>
+    </div>
+
+    <div class="controls">
+      <div style="font-family: Orbitron, monospace; font-size: 10px; color: #4a6a7a; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;">Mao Direita ✋➡️</div>
+      <button class="gesture-btn" data-gesture="pinch_right" onclick="startCapture('pinch_right')">
+        <span>🤏 Pinca (direita)</span>
+        <span class="count" id="count-pinch_right">0/25</span>
+      </button>
+      <button class="gesture-btn" data-gesture="open_palm_right" onclick="startCapture('open_palm_right')">
+        <span>🖐️ Mao Aberta (direita)</span>
+        <span class="count" id="count-open_palm_right">0/25</span>
+      </button>
+      <button class="gesture-btn" data-gesture="fist_right" onclick="startCapture('fist_right')">
+        <span>✊ Punho (direita)</span>
+        <span class="count" id="count-fist_right">0/25</span>
+      </button>
+      <button class="gesture-btn" data-gesture="pointing_right" onclick="startCapture('pointing_right')">
+        <span>☝️ Apontar (direita)</span>
+        <span class="count" id="count-pointing_right">0/25</span>
+      </button>
+
+      <div style="font-family: Orbitron, monospace; font-size: 10px; color: #4a6a7a; letter-spacing: 2px; text-transform: uppercase; margin: 12px 0 4px;">Mao Esquerda ⬅️✋</div>
+      <button class="gesture-btn" data-gesture="pinch_left" onclick="startCapture('pinch_left')">
+        <span>🤏 Pinca (esquerda)</span>
+        <span class="count" id="count-pinch_left">0/25</span>
+      </button>
+      <button class="gesture-btn" data-gesture="open_palm_left" onclick="startCapture('open_palm_left')">
+        <span>🖐️ Mao Aberta (esquerda)</span>
+        <span class="count" id="count-open_palm_left">0/25</span>
+      </button>
+      <button class="gesture-btn" data-gesture="fist_left" onclick="startCapture('fist_left')">
+        <span>✊ Punho (esquerda)</span>
+        <span class="count" id="count-fist_left">0/25</span>
+      </button>
+      <button class="gesture-btn" data-gesture="pointing_left" onclick="startCapture('pointing_left')">
+        <span>☝️ Apontar (esquerda)</span>
+        <span class="count" id="count-pointing_left">0/25</span>
+      </button>
+
+      <div style="font-family: Orbitron, monospace; font-size: 10px; color: #4a6a7a; letter-spacing: 2px; text-transform: uppercase; margin: 12px 0 4px;">Neutro</div>
+      <button class="gesture-btn" data-gesture="none" onclick="startCapture('none')">
+        <span>✋ Nenhum (mao relaxada)</span>
+        <span class="count" id="count-none">0/25</span>
+      </button>
+
+      <div class="actions">
+        <button class="download-btn" id="downloadBtn" onclick="downloadAll()" disabled>
+          Baixar Dataset (.zip)
+        </button>
+      </div>
+      <div class="status" id="status">Aguardando...</div>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <h3>Como usar</h3>
+    <ul>
+      <li>1. Clique no gesto que quer capturar</li>
+      <li>2. Faca o gesto com a mao (countdown de 3s)</li>
+      <li>3. Mantenha o gesto parado — 25 fotos sao tiradas automaticamente</li>
+      <li>4. Varie um pouco: angulo, distancia, mao esquerda/direita</li>
+      <li>5. Quando todos tiverem <em>25/25</em>, clique em <em>Baixar Dataset</em></li>
+      <li>6. O .zip vai pro script de treino Python</li>
+    </ul>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script>
+    const video = document.getElementById('video');
+    const flash = document.getElementById('flash');
+    const countdownEl = document.getElementById('countdown');
+    const statusEl = document.getElementById('status');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    const captured = {};
+    const TARGET = 25;
+    const ALL_GESTURES = [
+      'pinch_right', 'open_palm_right', 'fist_right', 'pointing_right',
+      'pinch_left', 'open_palm_left', 'fist_left', 'pointing_left',
+      'none'
+    ];
+    let isCapturing = false;
+
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480, facingMode: 'user' }, audio: false
+        });
+        video.srcObject = stream;
+        statusEl.textContent = 'Camera pronta — selecione um gesto';
+      } catch (e) {
+        statusEl.textContent = 'Erro: ' + e.message;
+      }
+    }
+
+    function captureFrame() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 480;
+      const ctx = canvas.getContext('2d');
+      // Mirror the capture to match mirrored video display
+      ctx.translate(640, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, 640, 480);
+      return canvas.toDataURL('image/jpeg', 0.92);
+    }
+
+    function flashEffect() {
+      flash.classList.add('active');
+      setTimeout(() => flash.classList.remove('active'), 100);
+    }
+
+    function updateCount(gesture) {
+      const count = (captured[gesture] || []).length;
+      const el = document.getElementById('count-' + gesture);
+      if (el) el.textContent = `${count}/${TARGET}`;
+      const btn = document.querySelector(`[data-gesture="${gesture}"]`);
+      if (btn && count >= TARGET) {
+        btn.classList.add('done');
+        btn.classList.remove('capturing');
+      }
+
+      // Check if all gestures done
+      const allDone = ALL_GESTURES.every(
+        g => (captured[g] || []).length >= TARGET
+      );
+      downloadBtn.disabled = !allDone;
+    }
+
+    async function startCapture(gesture) {
+      if (isCapturing) return;
+      if (!captured[gesture]) captured[gesture] = [];
+      if (captured[gesture].length >= TARGET) {
+        statusEl.textContent = gesture + ' ja tem ' + TARGET + ' frames!';
+        return;
+      }
+
+      isCapturing = true;
+      const btn = document.querySelector(`[data-gesture="${gesture}"]`);
+      btn.classList.add('capturing');
+      statusEl.textContent = 'Prepare o gesto...';
+
+      // Countdown 3-2-1
+      for (let i = 3; i >= 1; i--) {
+        countdownEl.textContent = i;
+        countdownEl.classList.add('show');
+        await sleep(1000);
+      }
+      countdownEl.classList.remove('show');
+
+      // Capture frames
+      const remaining = TARGET - captured[gesture].length;
+      const toCapture = Math.min(remaining, 25);
+      statusEl.textContent = `Capturando ${gesture}... mantenha o gesto!`;
+
+      for (let i = 0; i < toCapture; i++) {
+        const frame = captureFrame();
+        captured[gesture].push(frame);
+        flashEffect();
+        updateCount(gesture);
+        await sleep(120); // ~8 fps with variation
+      }
+
+      btn.classList.remove('capturing');
+      isCapturing = false;
+      statusEl.textContent = `${gesture}: ${captured[gesture].length}/${TARGET} pronto!`;
+    }
+
+    async function downloadAll() {
+      statusEl.textContent = 'Gerando ZIP...';
+      const zip = new JSZip();
+
+      for (const [gesture, frames] of Object.entries(captured)) {
+        const folder = zip.folder(gesture);
+        for (let i = 0; i < frames.length; i++) {
+          const base64 = frames[i].split(',')[1];
+          folder.file(`${gesture}_${String(i).padStart(3, '0')}.jpg`, base64, { base64: true });
+        }
+      }
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'gesture-dataset.zip';
+      a.click();
+      URL.revokeObjectURL(url);
+      statusEl.textContent = 'Dataset baixado! Agora rode o script de treino.';
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    initCamera();
+  </script>
+</body>
+</html>

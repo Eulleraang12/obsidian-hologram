@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J.A.R.V.I.S. — DATASKY VAULT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/",
+      "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs"
+    }
+  }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@8.6.6/dist/pixi.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pixi-filters@6.1.4/dist/browser/pixi-filters.min.js"></script>
+</head>
+<body>
+  <video id="webcam" autoplay muted playsinline></video>
+  <div id="webcam-overlay"></div>
+  <div class="vignette"></div>
+  <div class="scan-lines"></div>
+  <canvas id="particles-canvas"></canvas>
+  <canvas id="graph-canvas"></canvas>
+  <canvas id="hand-overlay"></canvas>
+  <div id="hud-root"></div>
+  <div class="corner-bracket tl"></div>
+  <div class="corner-bracket tr"></div>
+  <div class="corner-bracket bl"></div>
+  <div class="corner-bracket br"></div>
+  <div id="note-layer"></div>
+  <div id="boot-screen">J.A.R.V.I.S. ONLINE — WELCOME BACK, SIR.</div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

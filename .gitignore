@@ -1,0 +1,9 @@
+training/dataset/
+training/captured/
+training/gesture-dataset.zip
+training/hand_landmarker.task
+
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
