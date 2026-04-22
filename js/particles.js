@@ -4,8 +4,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const CONNECTION_DIST = 0.45;
-const SPHERE_RADIUS = 4.5;
+const CONNECTION_DIST = 0.8;
+const SPHERE_RADIUS = 8;
 
 function fibonacciSphere(count) {
   const points = [];
@@ -22,7 +22,7 @@ function fibonacciSphere(count) {
 }
 
 export class Particles {
-  constructor({ canvas, count = 120 }) {
+  constructor({ canvas, count = 300 }) {
     this.canvas = canvas;
     this.count = count;
     this._running = false;
@@ -120,8 +120,8 @@ export class Particles {
       pos[i * 3] = p.x;
       pos[i * 3 + 1] = p.y;
       pos[i * 3 + 2] = p.z;
-      sizes[i] = 3 + Math.random() * 4;
-      alphas[i] = 0.5 + Math.random() * 0.5;
+      sizes[i] = 8 + Math.random() * 8;
+      alphas[i] = 0.85 + Math.random() * 0.15;
     }
 
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -133,7 +133,7 @@ export class Particles {
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       uniforms: {
-        uColor: { value: new THREE.Color(0x00d4ff) },
+        uColor: { value: new THREE.Color(0xF59E0B) },
         uPixelRatio: { value: this.renderer.getPixelRatio() },
       },
       vertexShader: `
@@ -188,7 +188,7 @@ export class Particles {
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
     const mat = new THREE.LineBasicMaterial({
-      color: 0x00d4ff,
+      color: 0xF59E0B,
       transparent: true,
       opacity: 0.12,
       blending: THREE.AdditiveBlending,
