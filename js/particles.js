@@ -213,7 +213,7 @@ export class Particles {
       const t = performance.now() * 0.0003;
       for (let i = 0; i < this.count; i++) {
         const base = this._positions[i];
-        const offset = Math.sin(t + i * 0.7) * 0.04;
+        const offset = Math.sin(t + i * 0.7) * 0.12 + Math.sin(t * 0.5 + i * 1.3) * 0.06;
         const dir = base.clone().normalize();
         posAttr.setXYZ(
           i,

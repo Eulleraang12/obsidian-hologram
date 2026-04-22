@@ -311,17 +311,13 @@ function handleGesture(name, payload, ctx) {
       break;
     }
 
-    // 🖐️ Open palm = repel particles / exit isolation (with cooldown)
+    // 🖐️ Open palm = repel particles / exit isolation
     case 'openPalm': {
-      const now = Date.now();
-      if (!state.lastOpenPalm || now - state.lastOpenPalm > 800) {
-        state.lastOpenPalm = now;
-        if (state.particles && state.particles.isIsolated()) {
-          state.particles.exitIsolation();
-        } else if (payload.center) {
-          const { sx, sy } = toScreen(payload.center);
-          graph.repelAt(sx, sy, 350, 1200);
-        }
+      if (state.particles && state.particles.isIsolated()) {
+        state.particles.exitIsolation();
+      } else if (payload.center) {
+        const { sx, sy } = toScreen(payload.center);
+        graph.repelAt(sx, sy, 150, 400);
       }
       break;
     }
