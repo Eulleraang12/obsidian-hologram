@@ -310,7 +310,8 @@ export class GraphEngine {
         n._label.alpha += (targetAlpha - n._label.alpha) * 0.2;
       }
       if (n._gfx) {
-        const target = (n === this._hovered || this._dragSet.has(n)) ? 1.35 : 1;
+        const pulse = 1 + Math.sin(performance.now() * 0.002 + i * 0.5) * 0.06;
+        const target = (n === this._hovered || this._dragSet.has(n)) ? 1.35 : pulse;
         const cur = n._gfx.scale.x;
         n._gfx.scale.set(cur + (target - cur) * 0.2);
       }
