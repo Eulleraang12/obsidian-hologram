@@ -1,7 +1,7 @@
 // main.js — orchestrator for the J.A.R.V.I.S. DataSky Vault hologram
 import { loadVault, buildGraph } from './vault-loader.js';
 import { HandTracker } from './hand-tracker.js';
-import { GraphEngine } from './graph.js';
+import { Globe as GraphEngine } from './globe.js';
 import { NoteViewer } from './note-viewer.js';
 import { HUD } from './hud.js';
 import { Particles } from './particles.js';
@@ -43,12 +43,12 @@ async function init() {
   const { nodes, links } = buildGraph(vaultData);
 
   // Particles (3D sphere)
-  const particles = new Particles({ canvas: particlesCanvas, count: 120 });
-  particles.start();
-  state.particles = particles;
+  //const particles = new Particles({ canvas: particlesCanvas, count: 120 });
+  //particles.start();
+  //state.particles = particles;
 
   // Graph
-  const graph = new GraphEngine({ canvas: graphCanvas, nodes, links });
+  const graph = new GraphEngine({ canvas: particlesCanvas, nodes, links });
   await graph.start();
   setTimeout(() => graph.resetView && graph.resetView(), 50);
 
