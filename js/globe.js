@@ -279,6 +279,14 @@ if (node._glow && !this._dragSet.has(node)) {
     node._mesh.position.copy(spherePos);
     node._glow?.position.copy(spherePos);
     node._spherePos = spherePos.clone();
+    if (this._linksMesh) {
+        const posAttr = this._linksMesh.geometry.getAttribute('position');
+        this.links.forEach((l, idx) => {
+            if (l.source === node.id) posAttr.setXYZ(idx*2, spherePos.x, spherePos.y, spherePos.z);
+            else if (l.target === node.id) posAttr.setXYZ(idx*2+1, spherePos.x, spherePos.y, spherePos.z);
+        });
+        posAttr.needsUpdate = true;
+    }
 }
 
   endDrag(key = '__default') {
