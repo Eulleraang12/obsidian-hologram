@@ -279,7 +279,7 @@ function handleGesture(name, payload, ctx) {
         if (noteViewer.isVisible()) {
           noteViewer.scrollBy(-cdy * 1.8);
         } else {
-          graph.pan(cdx, cdy);
+          graph.rotate(cdx, cdy);
           if (state.particles) state.particles.rotate(cdx * 2, cdy * 2);
         }
       }
@@ -300,8 +300,9 @@ function handleGesture(name, payload, ctx) {
       const { sx, sy } = toScreen(payload.pinchPoint);
       const node = graph.pickNode(sx, sy);
       if (node) {
-        graph.focusNode(node);
-      }
+      graph.focusNode(node);
+      activateNode(node);
+}
       break;
     }
 
@@ -351,7 +352,7 @@ function handleGesture(name, payload, ctx) {
 }
 
 function wireMouseFallback({ graph, noteViewer }) {
-  const canvas = document.getElementById('graph-canvas');
+  const canvas = document.getElementById('particles-canvas');
 
   const MK = 'mouse';
   canvas.addEventListener('mousemove', (e) => {

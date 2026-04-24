@@ -210,7 +210,26 @@ export class Globe {
     return this.nodes.find(n => n._mesh === hits[0].object) || null;
   }
 
-  hoverNode(node) { this._hovered = node || null; }
+  hoverNode(node) {
+    this._hovered = node || null;
+    const label = document.getElementById('hover-label');
+    if (!label) return;
+    if (node && node._mesh) {
+        const pos = node._mesh.position.clone();
+        this._rotationGroup.localToWorld(pos);
+        pos.project(this.camera);
+        const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-pos.y * 0.5 + 0.5) * window.innerHeight + 20;
+        label.textContent = node.label || node.id || '';
+        label.style.display = 'block';
+        label.style.left = x + 'px';
+        label.style.top = y + 'px';
+        label.style.transform = 'translateX(-50%)';
+        label.style.bottom = '';
+    } else {
+        label.style.display = 'none';
+    }
+}
 
   beginDragNode(node, sx, sy, key = '__default') {
     if (!node) return;
@@ -221,10 +240,16 @@ export class Globe {
   }
 
   dragNode(sx, sy, key = '__default') {
-    // No modo esfera, drag = rotação
-    const node = this._dragByKey.get(key);
-    if (!node) return;
+  const last = this._lastDrag?.get(key);
+  if (last) {
+    const dx = sx - last.x;
+    const dy = sy - last.y;
+    this._rotationGroup.rotation.y += dx * 0.008;
+    this._rotationGroup.rotation.x += dy * 0.008;
   }
+  if (!this._lastDrag) this._lastDrag = new Map();
+  this._lastDrag.set(key, { x: sx, y: sy });
+}
 
   endDrag(key = '__default') {
     this._dragByKey.delete(key);
