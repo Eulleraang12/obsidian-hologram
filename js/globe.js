@@ -175,6 +175,22 @@ if (node._glow && !this._dragSet.has(node)) {
     node._glow.scale.setScalar(pulse2);
 }
       });
+      // Pulso nas linhas conectadas ao nó pinçado
+      if (this._dragSet.size > 0 && this._linksMesh) {
+        const pulse = 0.5 + Math.sin(t * 4) * 0.5;
+        const colorAttr = this._linksMesh.geometry.getAttribute('color');
+        const dragNode = this._dragSet.values().next().value;
+        this.links.forEach((l, idx) => {
+          const connected = l.source === dragNode.id || l.target === dragNode.id;
+          if (connected) {
+            colorAttr.setXYZ(idx*2, 0, pulse, pulse);
+            colorAttr.setXYZ(idx*2+1, 0, pulse, pulse);
+          }
+        });
+        colorAttr.needsUpdate = true;
+        this._linksMesh.material.opacity = 0.5 + pulse * 0.5;
+      }
+      
       this.renderer.render(this.scene, this.camera);
       requestAnimationFrame(tick);
     };
