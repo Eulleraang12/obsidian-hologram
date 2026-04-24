@@ -52,7 +52,7 @@ export class Globe {
 
     // Raycaster
     this._raycaster = new THREE.Raycaster();
-    this._raycaster.params.Points = { threshold: 0.3 };
+    this._raycaster.params.Points = { threshold: 1.2 };
 
     // Group que rotaciona
     this._rotationGroup = new THREE.Group();
@@ -137,12 +137,13 @@ export class Globe {
       positions.push(a._spherePos.x, a._spherePos.y, a._spherePos.z);
       positions.push(b._spherePos.x, b._spherePos.y, b._spherePos.z);
     }
+    const colors = [];
+    const dim = [0.18, 0.45, 0.7];
+    for (let i = 0; i < positions.length / 6; i++) colors.push(...dim, ...dim);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
-    const mat = new THREE.LineBasicMaterial({
-      color: 0x4fe3ff, transparent: true, opacity: 0.15,
-      blending: THREE.AdditiveBlending, depthWrite: false
-    });
+    geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+    const mat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
     this._linksMesh = new THREE.LineSegments(geo, mat);
     this._rotationGroup.add(this._linksMesh);
   }
@@ -165,14 +166,14 @@ export class Globe {
       // Pulso nos nós
       const t = performance.now() * 0.001;
       this.nodes.forEach((node, i) => {
-        if (node._mesh) {
-          const pulse = 1 + Math.sin(t + i * 0.5) * 0.15;
-          node._mesh.scale.setScalar(pulse);
-        }
-        if (node._glow) {
-          const pulse2 = 1 + Math.sin(t * 0.7 + i * 0.3) * 0.2;
-          node._glow.scale.setScalar(pulse2);
-        }
+        if (node._mesh && !this._dragSet.has(node)) {
+    const pulse = 1 + Math.sin(t + i * 0.5) * 0.15;
+    node._mesh.scale.setScalar(pulse);
+}
+if (node._glow && !this._dragSet.has(node)) {
+    const pulse2 = 1 + Math.sin(t * 0.7 + i * 0.3) * 0.2;
+    node._glow.scale.setScalar(pulse2);
+}
       });
       this.renderer.render(this.scene, this.camera);
       requestAnimationFrame(tick);
@@ -237,26 +238,75 @@ export class Globe {
     this._dragSet.clear();
     for (const n of this._dragByKey.values()) this._dragSet.add(n);
     this._autoRotate = false;
-  }
+    this.hoverNode(node);
+    if (node._mesh) {
+        node._mesh.material.color.set(0xffffff);
+        node._mesh.scale.setScalar(2.5);
+    }
+    if (node._glow) {
+        node._glow.material.opacity = 0.5;
+        node._glow.scale.setScalar(3);
+    }
+    if (this._linksMesh) {
+        const colorAttr = this._linksMesh.geometry.getAttribute('color');
+        this.links.forEach((l, idx) => {
+            const connected = l.source === node.id || l.target === node.id;
+            const r = connected ? 0.0 : 0.18;
+            const g = connected ? 1.0 : 0.45;
+            const b = connected ? 1.0 : 0.7;
+            colorAttr.setXYZ(idx*2, r, g, b);
+            colorAttr.setXYZ(idx*2+1, r, g, b);
+        });
+        colorAttr.needsUpdate = true;
+        this._linksMesh.material.opacity = 0.7;
+    }
+}
 
   dragNode(sx, sy, key = '__default') {
-  const last = this._lastDrag?.get(key);
-  if (last) {
-    const dx = sx - last.x;
-    const dy = sy - last.y;
-    this._rotationGroup.rotation.y += dx * 0.008;
-    this._rotationGroup.rotation.x += dy * 0.008;
-  }
-  if (!this._lastDrag) this._lastDrag = new Map();
-  this._lastDrag.set(key, { x: sx, y: sy });
+    const node = this._dragByKey.get(key);
+    if (!node || !node._mesh) return;
+    const ndc = new THREE.Vector2(
+        (sx / window.innerWidth) * 2 - 1,
+        -(sy / window.innerHeight) * 2 + 1
+    );
+    this._raycaster.setFromCamera(ndc, this.camera);
+    const ray = this._raycaster.ray;
+    const dist = node._mesh.position.length();
+    const target = ray.direction.clone().multiplyScalar(dist + this.camera.position.z);
+    const worldPos = target.add(this.camera.position);
+    const localPos = this._rotationGroup.worldToLocal(worldPos.clone());
+    const spherePos = localPos.normalize().multiplyScalar(GLOBE_RADIUS);
+    node._mesh.position.copy(spherePos);
+    node._glow?.position.copy(spherePos);
+    node._spherePos = spherePos.clone();
 }
 
   endDrag(key = '__default') {
+    const node = this._dragByKey.get(key);
+    if (node && node._mesh) {
+        node._mesh.material.color.set(node._baseColor);
+        node._mesh.scale.setScalar(1);
+    }
+    if (node && node._glow) {
+        node._glow.material.opacity = 0.12;
+        node._glow.scale.setScalar(1);
+    }
+    if (this._linksMesh) {
+        const colorAttr = this._linksMesh.geometry.getAttribute('color');
+        const dim = [0.18, 0.45, 0.7];
+        for (let i = 0; i < this.links.length; i++) {
+            colorAttr.setXYZ(i*2, ...dim);
+            colorAttr.setXYZ(i*2+1, ...dim);
+        }
+        colorAttr.needsUpdate = true;
+        this._linksMesh.material.opacity = 0.5;
+    }
     this._dragByKey.delete(key);
     this._dragSet.clear();
     for (const n of this._dragByKey.values()) this._dragSet.add(n);
+    this.hoverNode(null);
     setTimeout(() => { this._autoRotate = true; }, 2000);
-  }
+}
 
   endAllDrags() {
     this._dragByKey.clear();
