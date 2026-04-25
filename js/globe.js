@@ -361,33 +361,57 @@ if (node._glow && !this._dragSet.has(node)) {
     if (this._exploded) return;
     this._exploded = true;
     this._autoRotate = false;
-    const duration = 1200;
-    const start = performance.now();
-    this.nodes.forEach(node => {
-      const dir = node._spherePos.clone().normalize();
-      dir.x += (Math.random() - 0.5) * 0.8;
-      dir.y += (Math.random() - 0.5) * 0.8;
-      dir.z += (Math.random() - 0.5) * 0.8;
-      node._explodeDir = dir.normalize();
-      node._explodeOrigin = node._spherePos.clone();
-    });
-    const tick = () => {
-      const t = Math.min((performance.now() - start) / duration, 1);
-      const ease = t * t;
+
+    // Phase 1: electric pulse (400ms) — nodes glow cyan and pulse
+    const pulseDuration = 400;
+    const pulseStart = performance.now();
+    const pulseTick = () => {
+      const pt = Math.min((performance.now() - pulseStart) / pulseDuration, 1);
+      const pulse = Math.sin(pt * Math.PI * 6) * 0.5 + 0.5;
       this.nodes.forEach(node => {
         if (!node._mesh) return;
-        const pos = node._explodeOrigin.clone().addScaledVector(node._explodeDir, ease * 25);
-        node._mesh.position.copy(pos);
-        node._glow?.position.copy(pos);
-        node._mesh.material.opacity = 1 - ease;
-        if (node._glow) node._glow.material.opacity = (1 - ease) * 0.12;
+        if (node._glow) {
+          node._glow.material.color.setRGB(0, 0.8 + pulse * 0.2, 1);
+          node._glow.material.opacity = 0.12 + pulse * 0.4;
+        }
+        node._mesh.material.color.setRGB(pulse, 1, 1);
       });
-      this._globeMesh.material.opacity = (1 - ease) * 0.08;
-      this._linksMesh.material.opacity = (1 - ease) * 0.5;
-      if (t < 1) requestAnimationFrame(tick);
-      else this._rotationGroup.visible = false;
+      if (pt < 1) requestAnimationFrame(pulseTick);
+      else launchExplosion();
     };
-    tick();
+    pulseTick();
+
+    // Phase 2: explosion — nodes fly outward with exponential ease
+    const launchExplosion = () => {
+      this.nodes.forEach(node => {
+        const dir = node._spherePos.clone().normalize();
+        dir.x += (Math.random() - 0.5) * 0.6;
+        dir.y += (Math.random() - 0.5) * 0.6;
+        dir.z += (Math.random() - 0.5) * 0.6;
+        node._explodeDir = dir.normalize();
+        node._explodeOrigin = node._spherePos.clone();
+      });
+      const duration = 900;
+      const start = performance.now();
+      const tick = () => {
+        const t = Math.min((performance.now() - start) / duration, 1);
+        const ease = t === 1 ? 1 : 1 - Math.pow(2, -10 * t); // exponential out
+        this.nodes.forEach(node => {
+          if (!node._mesh) return;
+          const pos = node._explodeOrigin.clone().addScaledVector(node._explodeDir, ease * 40);
+          node._mesh.position.copy(pos);
+          node._glow?.position.copy(pos);
+          node._mesh.material.opacity = (1 - ease) * 0.95;
+          node._mesh.material.color.setRGB(0, 0.8 + (1-ease)*0.2, 1);
+          if (node._glow) node._glow.material.opacity = (1 - ease) * 0.12;
+        });
+        this._globeMesh.material.opacity = (1 - ease) * 0.08;
+        this._linksMesh.material.opacity = (1 - ease) * 0.5;
+        if (t < 1) requestAnimationFrame(tick);
+        else this._rotationGroup.visible = false;
+      };
+      tick();
+    };
   }
 
   isExploded() { return !!this._exploded; }
@@ -396,16 +420,24 @@ if (node._glow && !this._dragSet.has(node)) {
     if (!this._exploded) return;
     this._exploded = false;
     this._rotationGroup.visible = true;
-    const duration = 1200;
+    // Capture current positions for suck-in animation
+    this.nodes.forEach(node => {
+      if (node._mesh) node._implodeStart = node._mesh.position.clone();
+    });
+    const duration = 700;
     const start = performance.now();
     const tick = () => {
       const t = Math.min((performance.now() - start) / duration, 1);
-      const ease = 1 - (1 - t) * (1 - t);
+      const ease = t * t * t; // cubic in — accelerates toward center
       this.nodes.forEach(node => {
         if (!node._mesh) return;
-        node._mesh.position.copy(node._spherePos);
-        node._glow?.position.copy(node._spherePos);
+        const pos = node._implodeStart
+          ? node._implodeStart.clone().lerp(node._spherePos, ease)
+          : node._spherePos.clone();
+        node._mesh.position.copy(pos);
+        node._glow?.position.copy(pos);
         node._mesh.material.opacity = ease * 0.95;
+        node._mesh.material.color.set(node._baseColor);
         if (node._glow) node._glow.material.opacity = ease * 0.12;
       });
       this._globeMesh.material.opacity = ease * 0.08;
@@ -415,6 +447,7 @@ if (node._glow && !this._dragSet.has(node)) {
     };
     tick();
   }
+
 
   resetView() {
     this.camera.position.set(0, 0, 14);
