@@ -340,13 +340,13 @@ if (node._glow && !this._dragSet.has(node)) {
   zoomAt(sx, sy, factor) { this.setZoom(factor); }
 
   repelAt(sx, sy, radius, strength) {
-    // Repulsão = girar o globo suavemente na direção da mão
+    // Mão empurra o globo para o lado oposto
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
     const dx = (sx - cx) / window.innerWidth;
     const dy = (sy - cy) / window.innerHeight;
-    this._rotationGroup.rotation.y += dx * 0.08;
-    this._rotationGroup.rotation.x += dy * 0.08;
+    this._rotationGroup.rotation.y -= dx * 0.25;
+    this._rotationGroup.rotation.x -= dy * 0.25;
     this._autoRotate = false;
     clearTimeout(this._repelTimeout);
     this._repelTimeout = setTimeout(() => { this._autoRotate = true; }, 1500);
