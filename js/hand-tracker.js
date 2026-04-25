@@ -256,14 +256,22 @@ export class HandTracker {
     s.wasFist = hand.isFist && !hand.isPinching;
 
     // 🔫 Pistola (close note)
-    if (hand.isPistol) {
-      if (!s.pistolFired) {
-        this._emit('pistol', { hand: hand.handedness });
-        s.pistolFired = true;
+      if (hand.isPistol) {
+        if (!s.pistolFired) {
+          this._emit('pistol', { hand: hand.handedness });
+          s.pistolFired = true;
+        }
+        this._pistolActive = this._pistolActive || new Set();
+        this._pistolActive.add(hand.handedness);
+        if (this._pistolActive.size >= 2 && !this._doublePistolFired) {
+          this._emit('doublePistol', {});
+          this._doublePistolFired = true;
+        }
+      } else {
+        s.pistolFired = false;
+        if (this._pistolActive) this._pistolActive.delete(hand.handedness);
+        if (!this._pistolActive || this._pistolActive.size === 0) this._doublePistolFired = false;
       }
-    } else {
-      s.pistolFired = false;
-    }
 
     // 🖐️ Open palm
     if (hand.isOpen) {

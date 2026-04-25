@@ -301,7 +301,8 @@ function handleGesture(name, payload, ctx) {
       const node = graph.pickNode(sx, sy);
       if (node) {
       graph.focusNode(node);
-      activateNode(node);
+      const payload = node.data || node;
+      noteViewer.show({ title: payload.title || node.label || node.id, folder: payload.folder || '', content: payload.content || '' });
 }
       break;
     }
@@ -346,6 +347,14 @@ function handleGesture(name, payload, ctx) {
       break;
     }
 
+    case 'doublePistol': {
+      if (graph.isExploded && graph.isExploded()) {
+        graph.implode();
+      } else {
+        graph.explode();
+      }
+      break;
+    }
     default:
       break;
   }

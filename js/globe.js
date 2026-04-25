@@ -357,6 +357,65 @@ if (node._glow && !this._dragSet.has(node)) {
     if (this.onNodeActivate) this.onNodeActivate(node);
   }
 
+  explode() {
+    if (this._exploded) return;
+    this._exploded = true;
+    this._autoRotate = false;
+    const duration = 1200;
+    const start = performance.now();
+    this.nodes.forEach(node => {
+      const dir = node._spherePos.clone().normalize();
+      dir.x += (Math.random() - 0.5) * 0.8;
+      dir.y += (Math.random() - 0.5) * 0.8;
+      dir.z += (Math.random() - 0.5) * 0.8;
+      node._explodeDir = dir.normalize();
+      node._explodeOrigin = node._spherePos.clone();
+    });
+    const tick = () => {
+      const t = Math.min((performance.now() - start) / duration, 1);
+      const ease = t * t;
+      this.nodes.forEach(node => {
+        if (!node._mesh) return;
+        const pos = node._explodeOrigin.clone().addScaledVector(node._explodeDir, ease * 25);
+        node._mesh.position.copy(pos);
+        node._glow?.position.copy(pos);
+        node._mesh.material.opacity = 1 - ease;
+        if (node._glow) node._glow.material.opacity = (1 - ease) * 0.12;
+      });
+      this._globeMesh.material.opacity = (1 - ease) * 0.08;
+      this._linksMesh.material.opacity = (1 - ease) * 0.5;
+      if (t < 1) requestAnimationFrame(tick);
+      else this._rotationGroup.visible = false;
+    };
+    tick();
+  }
+
+  isExploded() { return !!this._exploded; }
+
+  implode() {
+    if (!this._exploded) return;
+    this._exploded = false;
+    this._rotationGroup.visible = true;
+    const duration = 1200;
+    const start = performance.now();
+    const tick = () => {
+      const t = Math.min((performance.now() - start) / duration, 1);
+      const ease = 1 - (1 - t) * (1 - t);
+      this.nodes.forEach(node => {
+        if (!node._mesh) return;
+        node._mesh.position.copy(node._spherePos);
+        node._glow?.position.copy(node._spherePos);
+        node._mesh.material.opacity = ease * 0.95;
+        if (node._glow) node._glow.material.opacity = ease * 0.12;
+      });
+      this._globeMesh.material.opacity = ease * 0.08;
+      this._linksMesh.material.opacity = ease * 0.5;
+      if (t < 1) requestAnimationFrame(tick);
+      else this._autoRotate = true;
+    };
+    tick();
+  }
+
   resetView() {
     this.camera.position.set(0, 0, 14);
     this._rotationGroup.rotation.set(0, 0, 0);
