@@ -237,6 +237,7 @@ if (node._glow && !this._dragSet.has(node)) {
         this._linksMesh.material.opacity = 0.5 + pulse * 0.5;
       }
       
+      this._updateFloatingLabels();
       this.renderer.render(this.scene, this.camera);
       requestAnimationFrame(tick);
     };
@@ -293,6 +294,45 @@ if (node._glow && !this._dragSet.has(node)) {
         label.style.display = 'none';
     }
 }
+
+  _updateFloatingLabels() {
+    let container = document.getElementById('floating-labels');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'floating-labels';
+      container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+      document.body.appendChild(container);
+    }
+    const existing = Array.from(container.querySelectorAll('.float-label'));
+    existing.forEach(el => el.remove());
+    const sorted = this.nodes
+      .filter(n => n._mesh)
+      .map(n => {
+        const wp = n._mesh.position.clone();
+        this._rotationGroup.localToWorld(wp);
+        const proj = wp.clone().project(this.camera);
+        return { node: n, proj };
+      })
+      .sort((a, b) => a.proj.z - b.proj.z)
+      .slice(0, 7);
+    sorted.forEach(({ node, proj }) => {
+      if (proj.z > 1.0) return;
+      const x = (proj.x * 0.5 + 0.5) * window.innerWidth;
+      const y = (-proj.y * 0.5 + 0.5) * window.innerHeight;
+      const fontSize = 10;
+      const opacity = 0.85;
+      const div = document.createElement('div');
+      div.className = 'float-label';
+      div.textContent = node.label || node.id || '';
+      div.style.left = x + 'px';
+      div.style.top = (y - 22) + 'px';
+      div.style.transform = 'translateX(-50%)';
+      div.style.whiteSpace = 'nowrap';
+      div.style.fontSize = fontSize + 'px';
+      div.style.opacity = opacity;
+      container.appendChild(div);
+    });
+  }
 
   beginDragNode(node, sx, sy, key = '__default') {
     if (!node) return;

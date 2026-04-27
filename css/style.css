@@ -264,3 +264,46 @@ opacity: 1;
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+
+/* Labels flutuantes JARVIS */
+#floating-labels {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.float-label {
+  position: absolute;
+  transform: translate(-50%, -160%);
+  color: rgba(0, 212, 255, 0.7);
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: normal;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 1px 5px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 2px;
+  text-shadow: 0 0 6px rgba(0,212,255,0.5);
+  will-change: transform;
+  isolation: isolate;
+}
+
+.float-label::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 6px;
+  background: rgba(0, 212, 255, 0.6);
+}
+
+
+  to   { opacity: 1; transform: translate(-50%, -130%); }
+}
