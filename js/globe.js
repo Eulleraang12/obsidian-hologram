@@ -68,15 +68,51 @@ export class Globe {
   }
 
   _buildGlobe() {
-    // Esfera wireframe holográfica
-    const geo = new THREE.IcosahedronGeometry(GLOBE_RADIUS, 4);
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0x00d4ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.08,
-    });
-    this._globeMesh = new THREE.Mesh(geo, mat);
+    // Esfera wireframe holográfica — grade lat/long estilo J.A.R.V.I.S.
+    const LAT_LINES = 12;
+    const LON_LINES = 16;
+    const gridGroup = new THREE.Group();
+
+    // Latitude lines
+    for (let i = 1; i < LAT_LINES; i++) {
+      const phi = (i / LAT_LINES) * Math.PI;
+      const r = GLOBE_RADIUS * Math.sin(phi);
+      const y = GLOBE_RADIUS * Math.cos(phi);
+      const depth = Math.abs(Math.cos(phi)); // 1 at poles, 0 at equator
+      const opacity = 0.3 + (1 - depth) * 0.3; // equator brighter
+      const points = [];
+      for (let j = 0; j <= 64; j++) {
+        const theta = (j / 64) * Math.PI * 2;
+        points.push(new THREE.Vector3(r * Math.cos(theta), y, r * Math.sin(theta)));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      const mat = new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity });
+      gridGroup.add(new THREE.Line(geo, mat));
+    }
+
+    // Longitude lines
+    for (let i = 0; i < LON_LINES; i++) {
+      const theta = (i / LON_LINES) * Math.PI * 2;
+      const points = [];
+      for (let j = 0; j <= 64; j++) {
+        const phi = (j / 64) * Math.PI;
+        points.push(new THREE.Vector3(
+          GLOBE_RADIUS * Math.sin(phi) * Math.cos(theta),
+          GLOBE_RADIUS * Math.cos(phi),
+          GLOBE_RADIUS * Math.sin(phi) * Math.sin(theta)
+        ));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      const mat = new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.4 });
+      gridGroup.add(new THREE.Line(geo, mat));
+    }
+
+    this._globeMesh = gridGroup;
+    this._globeMesh.material = { opacity: 1 }; // dummy for compatibility
+    this._globeMesh._setOpacity = (v) => {
+      gridGroup.children.forEach(line => { line.material.opacity = line._baseOpacity * v; });
+    };
+    gridGroup.children.forEach(line => { line._baseOpacity = line.material.opacity; });
     this._rotationGroup.add(this._globeMesh);
 
     // Partículas ambientes na superfície
@@ -405,7 +441,7 @@ if (node._glow && !this._dragSet.has(node)) {
           node._mesh.material.color.setRGB(0, 0.8 + (1-ease)*0.2, 1);
           if (node._glow) node._glow.material.opacity = (1 - ease) * 0.12;
         });
-        this._globeMesh.material.opacity = (1 - ease) * 0.08;
+        if (this._globeMesh._setOpacity) this._globeMesh._setOpacity(1 - ease); else this._globeMesh.material.opacity = (1 - ease) * 0.08;
         this._linksMesh.material.opacity = (1 - ease) * 0.5;
         if (t < 1) requestAnimationFrame(tick);
         else this._rotationGroup.visible = false;
@@ -440,7 +476,7 @@ if (node._glow && !this._dragSet.has(node)) {
         node._mesh.material.color.set(node._baseColor);
         if (node._glow) node._glow.material.opacity = ease * 0.12;
       });
-      this._globeMesh.material.opacity = ease * 0.08;
+      if (this._globeMesh._setOpacity) this._globeMesh._setOpacity(ease); else this._globeMesh.material.opacity = ease * 0.08;
       this._linksMesh.material.opacity = ease * 0.5;
       if (t < 1) requestAnimationFrame(tick);
       else this._autoRotate = true;
