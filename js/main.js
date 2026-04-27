@@ -1,5 +1,6 @@
 // main.js — orchestrator for the J.A.R.V.I.S. DataSky Vault hologram
 import { loadVault, buildGraph } from './vault-loader.js';
+import { Starfield } from './starfield.js';
 import { HandTracker } from './hand-tracker.js';
 import { Globe as GraphEngine } from './globe.js';
 import { NoteViewer } from './note-viewer.js';
@@ -30,6 +31,7 @@ async function init() {
   const graphCanvas = document.getElementById('graph-canvas');
   const particlesCanvas = document.getElementById('particles-canvas');
   const handCanvas = document.getElementById('hand-overlay');
+  const starfieldCanvas = document.getElementById('starfield-canvas');
   const hudRoot = document.getElementById('hud-root');
   const noteLayer = document.getElementById('note-layer');
   const bootScreen = document.getElementById('boot-screen');
@@ -51,6 +53,10 @@ async function init() {
   const graph = new GraphEngine({ canvas: particlesCanvas, nodes, links });
   await graph.start();
   setTimeout(() => graph.resetView && graph.resetView(), 50);
+
+  // Starfield background
+  const starfield = new Starfield({ canvas: starfieldCanvas });
+  starfield.start();
 
   // Webcam is now managed by HandTracker (GestureRecognizer handles stream internally)
 
@@ -83,7 +89,7 @@ async function init() {
   tracker = new HandTracker({
     videoEl: video,
     onUpdate: (data) => handleUpdate(data, handCanvas),
-    onGesture: (name, payload) => handleGesture(name, payload, { graph, noteViewer, hud, tracker }),
+    onGesture: (name, payload) => handleGesture(name, payload, { graph, noteViewer, hud, tracker, starfield }),
   });
 
   try {
@@ -178,7 +184,7 @@ function toScreen(point) {
 }
 
 function handleGesture(name, payload, ctx) {
-  const { graph, noteViewer, hud, tracker } = ctx;
+  const { graph, noteViewer, hud, tracker, starfield } = ctx;
   hud.setGesture(name);
 
   switch (name) {
@@ -350,8 +356,10 @@ function handleGesture(name, payload, ctx) {
     case 'doublePistol': {
       if (graph.isExploded && graph.isExploded()) {
         graph.implode();
+        if (starfield) starfield.implode(window.innerWidth / 2, window.innerHeight / 2);
       } else {
         graph.explode();
+        if (starfield) starfield.shockwave(window.innerWidth / 2, window.innerHeight / 2, 1.5);
       }
       break;
     }
