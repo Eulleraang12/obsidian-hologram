@@ -141,12 +141,12 @@ export class Globe {
       node._spherePos = pos.clone();
       node.x = pos.x; node.y = pos.y; node.z = pos.z;
 
-      const r = ((node.radius || 10) / 80);
+      const r = ((node.radius || 10) / 90);
       const color = hexToColor(node.color);
 
       // Glow externo
-      const glowGeo = new THREE.SphereGeometry(r * 2.5, 8, 8);
-      const glowMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.12, depthWrite: false });
+      const glowGeo = new THREE.SphereGeometry(r * 2.8, 8, 8);
+      const glowMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.15, depthWrite: false });
       const glow = new THREE.Mesh(glowGeo, glowMat);
       glow.position.copy(pos);
       this._rotationGroup.add(glow);
@@ -174,7 +174,7 @@ export class Globe {
       positions.push(b._spherePos.x, b._spherePos.y, b._spherePos.z);
     }
     const colors = [];
-    const dim = [0.18, 0.45, 0.7];
+    const dim = [0.0, 0.35, 0.6];
     for (let i = 0; i < positions.length / 6; i++) colors.push(...dim, ...dim);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
@@ -353,7 +353,7 @@ if (node._glow && !this._dragSet.has(node)) {
     }
     if (this._linksMesh) {
         const colorAttr = this._linksMesh.geometry.getAttribute('color');
-        const dim = [0.18, 0.45, 0.7];
+        const dim = [0.0, 0.35, 0.6];
         for (let i = 0; i < this.links.length; i++) {
             colorAttr.setXYZ(i*2, ...dim);
             colorAttr.setXYZ(i*2+1, ...dim);
