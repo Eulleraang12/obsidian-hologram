@@ -211,6 +211,16 @@ if (node._glow && !this._dragSet.has(node)) {
     node._glow.scale.setScalar(pulse2);
 }
       });
+
+      // Pulso no nó em hover (batimento cardíaco)
+      if (this._hovered && this._hovered._mesh) {
+        const hoverPulse = 1 + Math.sin(t * 6) * 0.18;
+        this._hovered._mesh.scale.setScalar(hoverPulse);
+        if (this._hovered._glow) {
+          this._hovered._glow.scale.setScalar(hoverPulse * 1.4);
+        }
+      }
+
       // Pulso nas linhas conectadas ao nó pinçado
       if (this._dragSet.size > 0 && this._linksMesh) {
         const pulse = 0.5 + Math.sin(t * 4) * 0.5;
