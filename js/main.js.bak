@@ -1,12 +1,10 @@
 // main.js — orchestrator for the J.A.R.V.I.S. DataSky Vault hologram
 import { loadVault, buildGraph } from './vault-loader.js';
-import { Starfield } from './starfield.js';
 import { HandTracker } from './hand-tracker.js';
-import { Globe as GraphEngine } from './globe.js';
+import { GraphEngine } from './graph.js';
 import { NoteViewer } from './note-viewer.js';
 import { HUD } from './hud.js';
 import { Particles } from './particles.js';
-import { mountCameraPicker } from './camera-picker.js';
 
 const state = {
   // Per-hand drag: Map<handKey, node>
@@ -32,7 +30,6 @@ async function init() {
   const graphCanvas = document.getElementById('graph-canvas');
   const particlesCanvas = document.getElementById('particles-canvas');
   const handCanvas = document.getElementById('hand-overlay');
-  const starfieldCanvas = document.getElementById('starfield-canvas');
   const hudRoot = document.getElementById('hud-root');
   const noteLayer = document.getElementById('note-layer');
   const bootScreen = document.getElementById('boot-screen');
@@ -46,18 +43,14 @@ async function init() {
   const { nodes, links } = buildGraph(vaultData);
 
   // Particles (3D sphere)
-  //const particles = new Particles({ canvas: particlesCanvas, count: 120 });
-  //particles.start();
-  //state.particles = particles;
+  const particles = new Particles({ canvas: particlesCanvas, count: 120 });
+  particles.start();
+  state.particles = particles;
 
   // Graph
-  const graph = new GraphEngine({ canvas: particlesCanvas, nodes, links });
+  const graph = new GraphEngine({ canvas: graphCanvas, nodes, links });
   await graph.start();
   setTimeout(() => graph.resetView && graph.resetView(), 50);
-
-  // Starfield background
-  const starfield = new Starfield({ canvas: starfieldCanvas });
-  starfield.start();
 
   // Webcam is now managed by HandTracker (GestureRecognizer handles stream internally)
 
@@ -90,13 +83,12 @@ async function init() {
   tracker = new HandTracker({
     videoEl: video,
     onUpdate: (data) => handleUpdate(data, handCanvas),
-    onGesture: (name, payload) => handleGesture(name, payload, { graph, noteViewer, hud, tracker, starfield }),
+    onGesture: (name, payload) => handleGesture(name, payload, { graph, noteViewer, hud, tracker }),
   });
 
   try {
     await tracker.start();
     hud.setStatus('ONLINE');
-    mountCameraPicker({ tracker }).catch((e) => console.warn('[main] camera picker failed', e));
   } catch (err) {
     console.warn('[main] camera denied, falling back to mouse', err);
     state.cameraFallback = true;
@@ -186,7 +178,7 @@ function toScreen(point) {
 }
 
 function handleGesture(name, payload, ctx) {
-  const { graph, noteViewer, hud, tracker, starfield } = ctx;
+  const { graph, noteViewer, hud, tracker } = ctx;
   hud.setGesture(name);
 
   switch (name) {
@@ -287,7 +279,7 @@ function handleGesture(name, payload, ctx) {
         if (noteViewer.isVisible()) {
           noteViewer.scrollBy(-cdy * 1.8);
         } else {
-          graph.rotate(cdx, cdy);
+          graph.pan(cdx, cdy);
           if (state.particles) state.particles.rotate(cdx * 2, cdy * 2);
         }
       }
@@ -308,10 +300,8 @@ function handleGesture(name, payload, ctx) {
       const { sx, sy } = toScreen(payload.pinchPoint);
       const node = graph.pickNode(sx, sy);
       if (node) {
-      graph.focusNode(node);
-      const payload = node.data || node;
-      noteViewer.show({ title: payload.title || node.label || node.id, folder: payload.folder || '', content: payload.content || '' });
-}
+        graph.focusNode(node);
+      }
       break;
     }
 
@@ -327,7 +317,7 @@ function handleGesture(name, payload, ctx) {
         state.particles.exitIsolation();
       } else if (payload.center) {
         const { sx, sy } = toScreen(payload.center);
-        graph.repelAt(sx, sy, 350, 1200);
+        graph.repelAt(sx, sy, 150, 400);
       }
       break;
     }
@@ -355,23 +345,13 @@ function handleGesture(name, payload, ctx) {
       break;
     }
 
-    case 'doublePistol': {
-      if (graph.isExploded && graph.isExploded()) {
-        graph.implode();
-        if (starfield) starfield.implode(window.innerWidth / 2, window.innerHeight / 2);
-      } else {
-        graph.explode();
-        if (starfield) starfield.shockwave(window.innerWidth / 2, window.innerHeight / 2, 1.5);
-      }
-      break;
-    }
     default:
       break;
   }
 }
 
 function wireMouseFallback({ graph, noteViewer }) {
-  const canvas = document.getElementById('particles-canvas');
+  const canvas = document.getElementById('graph-canvas');
 
   const MK = 'mouse';
   canvas.addEventListener('mousemove', (e) => {
